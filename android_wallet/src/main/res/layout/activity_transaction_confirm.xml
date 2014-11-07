@@ -1,0 +1,43 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context="de.uni_bonn.bit.TransactionConfirmActivity">
+
+    <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true" android:id="@+id/linearLayout">
+        <Button
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="Scan Transaction"
+                android:id="@+id/btnScanTransaction" android:layout_gravity="left"
+                android:onClick="onBtnScanTransactionClicked"/>
+        <Button
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="Confirm Transaction"
+                android:id="@+id/btnConfirmTransaction" android:layout_gravity="right"
+                android:onClick="onBtnConfirmTransactionClicked"/>
+    </LinearLayout>
+    <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Please scan a transaction."
+            android:id="@+id/txtInfo" android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" android:layout_below="@+id/linearLayout"
+            android:layout_alignRight="@+id/linearLayout" android:layout_alignEnd="@+id/linearLayout"/>
+    <ListView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/outputsListView" android:layout_alignParentBottom="true" android:layout_centerHorizontal="true"
+            android:layout_below="@+id/txtInfo" android:choiceMode="none" android:layout_marginTop="20dp"/>
+</RelativeLayout>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="de.uni_bonn.bit" >
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/wallet_logo"
+        android:label="@string/app_name" >
+        <activity
+            android:name="de.uni_bonn.bit.PairingActivity"
+            android:label="@string/title_activity_pairing"
+            android:screenOrientation="portrait">
+        </activity>
+        <activity
+            android:name="de.uni_bonn.bit.TransactionConfirmActivity"
+            android:label="@string/title_activity_transaction_confirm"
+            android:screenOrientation="portrait">
+        </activity>
+        <activity
+            android:name="de.uni_bonn.bit.MainActivityWithPairing"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

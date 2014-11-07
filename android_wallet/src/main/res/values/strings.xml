@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">2Factor Wallet</string>
+    <string name="hello_world">No transaction scanned</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_pairing">Pairing with Desktop...</string>
+    <string name="title_activity_transaction_confirm">Confirm transaction</string>
+    <string name="title_activity_main_activity_with_pairing">2Factor Wallet</string>
+    <string name="info_text_paring_failed">The pairing failed\n\n</string>
+    <string name="info_text_not_paired">Your Android wallet is not paired with a desktop wallet. Please click on the
+    Pair/Unpair button to pair your wallets.</string>
+    <string name="info_text_paired">Your Android wallet is correctly paired with a desktop wallet. You can sign
+    transactions now.</string>
+</resources>

@@ -1,0 +1,34 @@
+# Add project specific ProGuard rules here.
+# By default, the flags in this file are appended to flags specified
+# in /opt/android_adt/sdk/tools/proguard/proguard-android.txt
+# You can edit the include path and order by changing the ProGuard
+# include property in project.properties.
+#
+# For more details, see
+#   http://developer.android.com/guide/developing/tools/proguard.html
+
+# Add any project specific keep options here:
+
+# If your project uses WebView with JS, uncomment the following
+# and specify the fully qualified class name to the JavaScript interface
+# class:
+-keep class de.uni_bonn.bit.** {
+    *;
+}
+
+-keep class org.apache.avro.** {
+    *;
+}
+
+-keep class org.codehaus.jackson.**{
+    *;
+}
+
+-keepclassmembers enum * {
+ public static **[] values();
+}
+
+-keepattributes *
+-dontobfuscate
+-dontoptimize
+-ignorewarnings

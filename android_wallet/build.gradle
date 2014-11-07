@@ -1,0 +1,67 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:0.12.1'
+    }
+}
+apply plugin: 'android'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+android {
+    compileSdkVersion 19
+    buildToolsVersion '20'
+
+    defaultConfig {
+        minSdkVersion 14
+        targetSdkVersion 19
+        versionCode 1
+        versionName "1.0"
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+
+    buildTypes {
+        release {
+            runProguard true
+            proguardFiles getDefaultProguardFile('proguard-project.txt'), 'proguard-rules.txt'
+        }
+        debug {
+            runProguard true
+            proguardFiles getDefaultProguardFile('proguard-project.txt'), 'proguard-rules.txt'
+        }
+    }
+    //exclude files occuring in multiple jars -> otherwise the build fails
+    packagingOptions{
+        exclude 'META-INF/notice.txt'
+        exclude 'META-INF/license.txt'
+        exclude 'META-INF/jersey-module-version'
+        exclude 'META-INF/ASL2.0'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/DEPENDENCIES'
+    }
+}
+
+dependencies {
+    compile 'com.google.zxing:android-integration:2.3.0'
+    compile group:'org.bitcoinj', name:'bitcoinj-core', version:'0.12.1'
+    compile 'org.apache.avro:avro:1.7.7'
+    compile 'org.apache.avro:avro-ipc:1.7.7'
+    compile 'org.slf4j:slf4j-android:1.7.7'
+    compile project(':wallet_lib')
+}

@@ -1,0 +1,12 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="android:Theme.Holo">
+        <!-- Customize your theme here. -->
+    </style>
+
+    <style name="ListEntryStyle" parent="@android:style/TextAppearance.Small">
+
+    </style>
+
+</resources>
