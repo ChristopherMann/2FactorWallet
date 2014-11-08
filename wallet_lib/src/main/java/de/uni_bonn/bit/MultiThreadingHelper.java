@@ -14,7 +14,6 @@
 * limitations under the License.
 */
 package de.uni_bonn.bit;
-package de.uni_bonn.bit;
 
 import org.bitcoinj.core.ECKey;
 import org.spongycastle.crypto.digests.SHA512Digest;

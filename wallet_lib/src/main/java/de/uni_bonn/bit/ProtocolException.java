@@ -14,7 +14,6 @@
 * limitations under the License.
 */
 package de.uni_bonn.bit;
-package de.uni_bonn.bit;
 
 public class ProtocolException extends RuntimeException {
 

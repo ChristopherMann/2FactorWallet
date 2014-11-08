@@ -14,7 +14,6 @@
 * limitations under the License.
 */
 package de.uni_bonn.bit;
-package de.uni_bonn.bit;
 
 import org.bitcoinj.core.ECKey;
 import de.uni_bonn.bit.wallet_protocol.ZKProofDesktop;

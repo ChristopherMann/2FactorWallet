@@ -14,7 +14,6 @@
 * limitations under the License.
 */
 package de.uni_bonn.bit;
-package de.uni_bonn.bit;
 
 import ca.odell.glazedlists.BasicEventList;
 import ca.odell.glazedlists.gui.TableFormat;

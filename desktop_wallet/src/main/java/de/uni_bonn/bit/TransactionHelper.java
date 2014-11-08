@@ -14,7 +14,6 @@
 * limitations under the License.
 */
 package de.uni_bonn.bit;
-package de.uni_bonn.bit;
 
 import org.bitcoinj.core.*;
 import org.bitcoinj.params.RegTestParams;

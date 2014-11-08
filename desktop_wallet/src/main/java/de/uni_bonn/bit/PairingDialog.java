@@ -14,7 +14,6 @@
 * limitations under the License.
 */
 package de.uni_bonn.bit;
-package de.uni_bonn.bit;
 
 import com.google.zxing.WriterException;
 import com.intellij.uiDesigner.core.GridConstraints;

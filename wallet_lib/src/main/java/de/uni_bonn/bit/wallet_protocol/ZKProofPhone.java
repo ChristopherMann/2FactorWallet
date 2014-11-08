@@ -13,7 +13,6 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package de.uni_bonn.bit;
 package de.uni_bonn.bit.wallet_protocol;
 
 import org.bitcoinj.core.ECKey;
