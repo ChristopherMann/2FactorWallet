@@ -47,9 +47,9 @@ public class TransactionSignerTests extends TransactionSignerBaseTest {
         PaillierKeyPair pkpPhone = PaillierKeyPair.generatePaillierKeyPair();
 
         DesktopTransactionSigner desktopSigner = new DesktopTransactionSigner(req.tx, desktopKeyShare,
-                clearedCopy(phoneKeyShare), pkpDesktop, pkpPhone, desktopBCParameters, phoneBCParameters);
+                clearedCopy(phoneKeyShare), pkpDesktop, pkpPhone.clearPrivateKey(), desktopBCParameters, phoneBCParameters.clearPrivate());
         PhoneTransactionSigner phoneSigner = new PhoneTransactionSigner(new TransactionInfo(req.tx), phoneKeyShare,
-                clearedCopy(desktopKeyShare), pkpDesktop, pkpPhone, desktopBCParameters, phoneBCParameters);
+                clearedCopy(desktopKeyShare), pkpDesktop.clearPrivateKey(), pkpPhone, desktopBCParameters.clearPrivate(), phoneBCParameters);
 
         long startTime = System.currentTimeMillis();
 

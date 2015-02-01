@@ -59,7 +59,7 @@ public class TransactionSignerSerializationTests extends TransactionSignerBaseTe
         PaillierKeyPair pkpPhone = PaillierKeyPair.generatePaillierKeyPair();
 
         WalletProtocolTestImpl impl = new WalletProtocolTestImpl(req.tx, desktopKeyShare, clearedCopy(phoneKeyShare),
-                pkpDesktop, pkpPhone, desktopBCParameters, phoneBCParameters);
+                pkpDesktop, pkpPhone.clearPrivateKey(), desktopBCParameters, phoneBCParameters.clearPrivate());
 
         NettyServer server = new NettyServer(new ReflectResponder(IWalletProtocol.class,
                 impl), new InetSocketAddress(20000));
@@ -69,7 +69,7 @@ public class TransactionSignerSerializationTests extends TransactionSignerBaseTe
 
         TransactionInfo txInfo = proxy.fetchTransactionInfo();
         PhoneTransactionSigner signer = new PhoneTransactionSigner(txInfo, phoneKeyShare, clearedCopy(desktopKeyShare),
-                pkpDesktop, pkpPhone, desktopBCParameters, phoneBCParameters);
+                pkpDesktop.clearPrivateKey(), pkpPhone, desktopBCParameters.clearPrivate(), phoneBCParameters);
 
         SignatureParts[] signatureParts = proxy.getSignatureParts();
         EphemeralValueShare[] ephemeralValueShares = signer.generateEphemeralValueShare(signatureParts);

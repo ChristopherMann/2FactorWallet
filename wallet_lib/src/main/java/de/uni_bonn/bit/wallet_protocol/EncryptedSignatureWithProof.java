@@ -26,16 +26,28 @@ import java.math.BigInteger;
 public class EncryptedSignatureWithProof {
 
     @Stringable
-    public BigInteger sigma;
+    private BigInteger sigma;
     @Stringable
-    public BigInteger alphaPrime;
-    public ZKProofPhone proof;
+    private BigInteger alphaPhone;
+    private ZKProofPhone proof;
 
     public EncryptedSignatureWithProof(){}
 
-    public EncryptedSignatureWithProof(BigInteger sigma, BigInteger alphaPrime, ZKProofPhone proof) {
+    public EncryptedSignatureWithProof(BigInteger sigma, BigInteger alphaPhone, ZKProofPhone proof) {
         this.sigma = sigma;
-        this.alphaPrime = alphaPrime;
+        this.alphaPhone = alphaPhone;
         this.proof = proof;
+    }
+
+    public BigInteger getSigma() {
+        return sigma;
+    }
+
+    public BigInteger getAlphaPhone() {
+        return alphaPhone;
+    }
+
+    public ZKProofPhone getProof() {
+        return proof;
     }
 }

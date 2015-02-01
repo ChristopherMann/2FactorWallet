@@ -38,15 +38,15 @@ public class DesktopSigner {
     ECPoint otherPublicKey;
     MultiThreadingHelper zkProofHelper;
 
-    protected BigInteger k1;
-    protected BigInteger z1;
+    protected BigInteger kDesktop;
+    protected BigInteger zDesktop;
     protected BigInteger r1;
-    protected BigInteger alpha;
+    protected BigInteger alphaDesktop;
     protected BigInteger r2;
     protected BigInteger beta;
 
-    protected ECPoint Q2;
-    protected ECPoint QCommon;
+    protected ECPoint RPhone;
+    protected ECPoint R;
 
     public DesktopSigner(ECKey privateKey, ECKey otherPublicKey,  PaillierKeyPair pkpDesktop, PaillierKeyPair pkpPhone,
                          BCParameters desktopBCParameters, BCParameters phoneBCParameters) {
@@ -60,53 +60,51 @@ public class DesktopSigner {
     }
 
     public SignatureParts computeSignatureParts(){
-        k1 = IntegerFunctions.randomize(nEC);
-        z1 = k1.modInverse(nEC);
+        kDesktop = IntegerFunctions.randomize(nEC);
+        zDesktop = kDesktop.modInverse(nEC);
         r1 = pkpDesktop.generateRandomizer();
         r2 = pkpDesktop.generateRandomizer();
-        //beta = pkpDesktop.encrypt(privateKey.multiply(z1).mod(nEC), r2);
-        BigInteger nsquared = pkpDesktop.getN().pow(2);
-        ForkJoinTask<BigInteger> betaFuture = zkProofHelper.PowMult(pkpDesktop.getG(), privateKey.multiply(z1).mod(nEC), r2, pkpDesktop.getN(), nsquared);
-        //alpha = pkpDesktop.encrypt(z1, r1);
-        ForkJoinTask<BigInteger> alphaFuture = zkProofHelper.PowMult(pkpDesktop.getG(), z1, r1, pkpDesktop.getN(), nsquared);
+        BigInteger nsquaredDesktop = pkpDesktop.getN().pow(2);
+        ForkJoinTask<BigInteger> betaFuture = zkProofHelper.PowMult(pkpDesktop.getG(), privateKey.multiply(zDesktop).mod(nEC), r2, pkpDesktop.getN(), nsquaredDesktop);
+        ForkJoinTask<BigInteger> alphaDesktopFuture = zkProofHelper.PowMult(pkpDesktop.getG(), zDesktop, r1, pkpDesktop.getN(), nsquaredDesktop);
         beta =  betaFuture.join();
-        alpha = alphaFuture.join();
-        return new SignatureParts(alpha, beta);
+        alphaDesktop = alphaDesktopFuture.join();
+        return new SignatureParts(alphaDesktop, beta);
     }
 
     public EphemeralPublicValueWithProof computeEphemeralPublicValue(EphemeralValueShare ephemeralValueShare){
-        Q2 = ephemeralValueShare.getQ2();
-        // We first check that Q2 is associated with the correct curve and then we check that it is on the associated curve.
-        if(! (Q2.getCurve().equals(ECKey.CURVE.getCurve()) && Q2.isValid())){
-            throw new ProtocolException("The point Q provided by the desktop is invalid");
+        RPhone = ephemeralValueShare.getRPhone();
+        // We first check that RPhone is associated with the correct curve and then we check that it is on the associated curve.
+        if(! (RPhone.getCurve().equals(ECKey.CURVE.getCurve()) && RPhone.isValid())){
+            throw new ProtocolException("The point RPhone provided by the phone is invalid");
         }
-        QCommon = Q2.multiply(k1).normalize();
+        R = RPhone.multiply(kDesktop).normalize();
         ECPoint QDesktop = ECKey.CURVE.getG().multiply(privateKey).normalize();
-        ZKProofDesktop proof = ZKProofDesktop.generateProof(z1, privateKey.multiply(z1).mod(nEC), r1, r2, QCommon, Q2, QDesktop,
-                ECKey.CURVE.getG(), alpha, beta, pkpDesktop, desktopBCParameters, zkProofHelper);
-        return new EphemeralPublicValueWithProof(QCommon, proof);
+        ZKProofDesktop proof = ZKProofDesktop.generateProof(zDesktop, privateKey.multiply(zDesktop).mod(nEC), r1, r2, R, RPhone, QDesktop,
+                ECKey.CURVE.getG(), alphaDesktop, beta, pkpDesktop, desktopBCParameters, zkProofHelper);
+        return new EphemeralPublicValueWithProof(R, proof);
     }
 
     public ECKey.ECDSASignature decryptEncryptedSignature(EncryptedSignatureWithProof encryptedSignature, byte[] hash){
-        if(encryptedSignature.sigma.compareTo(BigInteger.ONE) < 0
-                || encryptedSignature.sigma.compareTo(pkpDesktop.getN().pow(2)) >= 0){
+        if(encryptedSignature.getSigma().compareTo(BigInteger.ONE) < 0
+                || encryptedSignature.getSigma().compareTo(pkpDesktop.getN().pow(2)) >= 0){
             throw new ProtocolException("Sigma is out of bounds.");
         }
-        if(encryptedSignature.alphaPrime.compareTo(BigInteger.ONE) < 0
-                || encryptedSignature.alphaPrime.compareTo(pkpPhone.getN().pow(2)) >=0 ){
+        if(encryptedSignature.getAlphaPhone().compareTo(BigInteger.ONE) < 0
+                || encryptedSignature.getAlphaPhone().compareTo(pkpPhone.getN().pow(2)) >=0 ){
             throw new ProtocolException("alpha_B is out of bounds.");
         }
 
         BigInteger hm = new BigInteger(1, hash);
-        BigInteger r = QCommon.normalize().getAffineXCoord().toBigInteger().mod(nEC);
+        BigInteger r = R.normalize().getAffineXCoord().toBigInteger().mod(nEC);
         BigInteger nsquared = pkpDesktop.getN().pow(2);
-        ForkJoinTask<BigInteger> c1 = zkProofHelper.PowMult(alpha, hm, nsquared);
+        ForkJoinTask<BigInteger> c1 = zkProofHelper.PowMult(alphaDesktop, hm, nsquared);
         ForkJoinTask<BigInteger> c2 = zkProofHelper.PowMult(beta, r, nsquared);
-        encryptedSignature.proof.verify(c1.join(), c2.join(),
-                encryptedSignature.sigma, encryptedSignature.alphaPrime, ECKey.CURVE.getG(), QCommon, otherPublicKey, Q2,
+        encryptedSignature.getProof().verify(c1.join(), c2.join(),
+                encryptedSignature.getSigma(), encryptedSignature.getAlphaPhone(), ECKey.CURVE.getG(), otherPublicKey, RPhone,
                 pkpDesktop, pkpPhone, phoneBCParameters, zkProofHelper);
         long start = System.currentTimeMillis();
-        BigInteger s = pkpDesktop.decrypt(encryptedSignature.sigma).mod(nEC);
+        BigInteger s = pkpDesktop.decrypt(encryptedSignature.getSigma()).mod(nEC);
         System.out.println("decrypt time " + (System.currentTimeMillis() - start) + "ms");
         return new ECKey.ECDSASignature(r, s);
     }

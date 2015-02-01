@@ -46,10 +46,8 @@ public class PaillierKeyPair {
         n = p.multiply(q);
         lambda = lcm(p.subtract(BigInteger.ONE), q.subtract(BigInteger.ONE));
         BigInteger nsquare = n.multiply(n);
-        do{
-            g = IntegerFunctions.randomize(nsquare);
-        }while(! L(g.modPow(lambda, nsquare)).gcd(n).equals(BigInteger.ONE));
-
+        //better choice for g by Damgard & Jurik (2001)
+        g = n.add(BigInteger.ONE);
         my = L(g.modPow(lambda, nsquare)).modInverse(n);
     }
 

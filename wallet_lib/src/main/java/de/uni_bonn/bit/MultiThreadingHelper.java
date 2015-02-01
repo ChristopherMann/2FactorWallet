@@ -33,7 +33,12 @@ import java.util.concurrent.RecursiveTask;
  */
 public class MultiThreadingHelper {
     private static final BigInteger nEC = ECKey.CURVE.getN();
+
     public static BigInteger hash(String id, Object... data){
+        return hash512(id, data).mod(nEC);
+    }
+
+    public static BigInteger hash512(String id, Object... data){
         System.out.println("hash() called with parameters:");
         System.out.println(id);
         SHA512Digest digest = new SHA512Digest();
@@ -53,7 +58,7 @@ public class MultiThreadingHelper {
         }
         byte[] resultBytes = new byte[64];
         digest.doFinal(resultBytes, 0);
-        return new BigInteger(1, resultBytes).mod(nEC);
+        return new BigInteger(1, resultBytes);
     }
 
     public static void dumpBitLengthOfValues(BigInteger... data) {
@@ -109,7 +114,6 @@ public class MultiThreadingHelper {
         @Override
         protected ECPoint compute() {
             if(values.length == 2){
-                long msStart = System.currentTimeMillis();
                 final BigInteger scalar = (BigInteger) values[0];
                 final ECPoint point = (ECPoint) values[1];
                 ECPoint result = point.multiply(scalar.mod(nEC));
@@ -119,7 +123,6 @@ public class MultiThreadingHelper {
                 return result;
             }else{
                 List<ForkJoinTask<ECPoint>> futures = new ArrayList<>();
-                long msStart = System.currentTimeMillis();
                 for(int i = 2; i < values.length; i += 2){
                     PointMultAddTask pma = new PointMultAddTask(values[i], values[i+1]);
                     pma.normalize = false;
@@ -150,7 +153,6 @@ public class MultiThreadingHelper {
         @Override
         protected BigInteger compute() {
             if(values.length == 3){
-                long msStart = System.currentTimeMillis();
                 final BigInteger a = (BigInteger) values[0];
                 final BigInteger b = (BigInteger) values[1];
                 final BigInteger q = (BigInteger) values[2];
@@ -159,7 +161,6 @@ public class MultiThreadingHelper {
             }else{
                 List<ForkJoinTask<BigInteger>> futures = new ArrayList<>();
                 BigInteger q = (BigInteger) values[values.length - 1];
-                long msStart = System.currentTimeMillis();
                 for(int i = 2; i < values.length - 1; i += 2){
                     PowMultTask pma = new PowMultTask(values[i], values[i+1], q);
                     futures.add(pma.fork());

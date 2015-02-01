@@ -60,8 +60,8 @@ public class ProtocolAttackTest {
 
     /**
      * This test tries to trick the phone into singing something completely different then it thinks by sending
-     * incorrectly constructed alpha and beta to the phone. This attack should not succeed as the zero-knowledge
-     * proof Pi_A proofs to the phone that alpha and beta are correct.
+     * incorrectly constructed alphaDesktop and beta to the phone. This attack should not succeed as the zero-knowledge
+     * proof Pi_A proofs to the phone that alphaDesktop and beta are correct.
      */
     @Test(expected = ProtocolException.class)
     public void attackOnPhoneSignerTest(){
@@ -76,28 +76,28 @@ public class ProtocolAttackTest {
 
         PaillierKeyPair pkpDesktop = PaillierKeyPair.generatePaillierKeyPair();
         PaillierKeyPair pkpPhone = PaillierKeyPair.generatePaillierKeyPair();
-        DesktopSigner desktopSigner = new DesktopSigner(desktopKeyShare, convertPointToPubKEy(QPhone), pkpDesktop, pkpPhone,
-                desktopBCParameters, phoneBCParameters){
+        DesktopSigner desktopSigner = new DesktopSigner(desktopKeyShare, convertPointToPubKEy(QPhone), pkpDesktop, pkpPhone.clearPrivateKey(),
+                desktopBCParameters, phoneBCParameters.clearPrivate()){
             @Override
             public SignatureParts computeSignatureParts() {
-                k1 = IntegerFunctions.randomize(nEC);
-                z1 = k1.modInverse(nEC);
+                kDesktop = IntegerFunctions.randomize(nEC);
+                zDesktop = kDesktop.modInverse(nEC);
                 r1 = pkpDesktop.generateRandomizer();
-                alpha = pkpDesktop.encrypt(z1.multiply(benignHashInt.modInverse(nEC)).multiply(maliciousHashInt).mod(nEC), r1);
+                alphaDesktop = pkpDesktop.encrypt(zDesktop.multiply(benignHashInt.modInverse(nEC)).multiply(maliciousHashInt).mod(nEC), r1);
                 r2 = pkpDesktop.generateRandomizer();
-                beta = pkpDesktop.encrypt(privateKey.multiply(z1).mod(nEC), r2);
-                return new SignatureParts(alpha, beta);
+                beta = pkpDesktop.encrypt(privateKey.multiply(zDesktop).mod(nEC), r2);
+                return new SignatureParts(alphaDesktop, beta);
             }
 
             @Override
             public ECKey.ECDSASignature decryptEncryptedSignature(EncryptedSignatureWithProof encryptedSignature, byte[] hash) {
-                BigInteger r = QCommon.normalize().getAffineXCoord().toBigInteger().mod(nEC);
-                BigInteger s = pkpDesktop.decrypt(encryptedSignature.sigma).mod(nEC);
+                BigInteger r = R.normalize().getAffineXCoord().toBigInteger().mod(nEC);
+                BigInteger s = pkpDesktop.decrypt(encryptedSignature.getSigma()).mod(nEC);
                 return new ECKey.ECDSASignature(r, s);
             }
         };
-        PhoneSigner phoneSigner = new PhoneSigner(phoneKeyShare, convertPointToPubKEy(QDesktop), pkpDesktop, pkpPhone,
-                desktopBCParameters, phoneBCParameters);
+        PhoneSigner phoneSigner = new PhoneSigner(phoneKeyShare, convertPointToPubKEy(QDesktop), pkpDesktop.clearPrivateKey(), pkpPhone,
+                desktopBCParameters.clearPrivate(), phoneBCParameters);
         //Step 1
         SignatureParts signatureParts = desktopSigner.computeSignatureParts();
         //Step 2
@@ -138,9 +138,9 @@ public class ProtocolAttackTest {
         List<Integer> bitLengthsSmall = Lists.newArrayList(10);
         for(int i = 1; i < 10; i++){
             DesktopSigner desktopSigner = new DesktopSigner(desktopKeyShare, convertPointToPubKEy(QPhoneSmall),
-                    pkpDesktop, pkpPhone, desktopBCParameters, phoneBCParameters);
-            PhoneSigner phoneSigner = new PhoneSigner(phoneKeySmall, convertPointToPubKEy(QDesktop), pkpDesktop, pkpPhone,
-                    desktopBCParameters, phoneBCParameters);
+                    pkpDesktop, pkpPhone.clearPrivateKey(), desktopBCParameters, phoneBCParameters.clearPrivate());
+            PhoneSigner phoneSigner = new PhoneSigner(phoneKeySmall, convertPointToPubKEy(QDesktop), pkpDesktop.clearPrivateKey(), pkpPhone,
+                    desktopBCParameters.clearPrivate(), phoneBCParameters);
             //Step 1
             SignatureParts signatureParts = desktopSigner.computeSignatureParts();
             //Step 2
@@ -149,16 +149,16 @@ public class ProtocolAttackTest {
             EphemeralPublicValueWithProof ephemeralPublicValueWithProof = desktopSigner.computeEphemeralPublicValue(ephemeralValueShare);
             //Step 4
             EncryptedSignatureWithProof encryptedSignatureWithProof = phoneSigner.computeEncryptedSignature(ephemeralPublicValueWithProof, hash);
-            bitLengthsSmall.add(pkpDesktop.decrypt(encryptedSignatureWithProof.sigma).bitLength());
+            bitLengthsSmall.add(pkpDesktop.decrypt(encryptedSignatureWithProof.getSigma()).bitLength());
         }
 
         //Phone uses a large key
         List<Integer> bitLengthsLarge = Lists.newArrayList(10);
         for(int i = 1; i < 10; i++){
             DesktopSigner desktopSigner = new DesktopSigner(desktopKeyShare, convertPointToPubKEy(QPhoneLarge),
-                    pkpDesktop, pkpPhone, desktopBCParameters, phoneBCParameters);
-            PhoneSigner phoneSigner = new PhoneSigner(phoneKeyLarge, convertPointToPubKEy(QDesktop), pkpDesktop, pkpPhone,
-                    desktopBCParameters, phoneBCParameters);
+                    pkpDesktop, pkpPhone.clearPrivateKey(), desktopBCParameters, phoneBCParameters.clearPrivate());
+            PhoneSigner phoneSigner = new PhoneSigner(phoneKeyLarge, convertPointToPubKEy(QDesktop), pkpDesktop.clearPrivateKey(), pkpPhone,
+                    desktopBCParameters.clearPrivate(), phoneBCParameters);
             //Step 1
             SignatureParts signatureParts = desktopSigner.computeSignatureParts();
             //Step 2
@@ -167,7 +167,7 @@ public class ProtocolAttackTest {
             EphemeralPublicValueWithProof ephemeralPublicValueWithProof = desktopSigner.computeEphemeralPublicValue(ephemeralValueShare);
             //Step 4
             EncryptedSignatureWithProof encryptedSignatureWithProof = phoneSigner.computeEncryptedSignature(ephemeralPublicValueWithProof, hash);
-            bitLengthsLarge.add(pkpDesktop.decrypt(encryptedSignatureWithProof.sigma).bitLength());
+            bitLengthsLarge.add(pkpDesktop.decrypt(encryptedSignatureWithProof.getSigma()).bitLength());
         }
 
         double smallMean = DoubleMath.mean(bitLengthsSmall);

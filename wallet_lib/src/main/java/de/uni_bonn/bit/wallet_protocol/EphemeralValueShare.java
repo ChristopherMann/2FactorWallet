@@ -23,20 +23,20 @@ import org.spongycastle.math.ec.ECPoint;
  * public ephemeral value share.
  */
 public class EphemeralValueShare {
-    private byte[] Q2;
+    private byte[] RPhone;
 
 
     private EphemeralValueShare(){ }
 
-    public EphemeralValueShare(ECPoint Q2){
-        setQ2(Q2);
+    public EphemeralValueShare(ECPoint RPhone){
+        setRPhone(RPhone);
     }
 
-    public ECPoint getQ2() {
-        return ECKey.CURVE.getCurve().decodePoint(this.Q2);
+    public ECPoint getRPhone() {
+        return ECKey.CURVE.getCurve().decodePoint(this.RPhone);
     }
 
-    public void setQ2(ECPoint Q2) {
-        this.Q2 = Q2.getEncoded(true);
+    public void setRPhone(ECPoint RPhone) {
+        this.RPhone = RPhone.getEncoded(true);
     }
 }

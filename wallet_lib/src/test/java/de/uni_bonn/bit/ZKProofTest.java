@@ -15,6 +15,7 @@
 */
 package de.uni_bonn.bit;
 
+import de.uni_bonn.bit.wallet_protocol.ZKProofInit;
 import org.bitcoinj.core.ECKey;
 import de.uni_bonn.bit.wallet_protocol.ZKProofDesktop;
 import de.uni_bonn.bit.wallet_protocol.ZKProofPhone;
@@ -40,29 +41,28 @@ public class ZKProofTest {
      * {@link de.uni_bonn.bit.wallet_protocol.ZKProofDesktop}
      */
     @Test
-    public void ZKProof1Test() {
+    public void ZKProofDesktopTest() {
         ECPoint G = ECKey.CURVE.getG();
-        BigInteger dAlice = IntegerFunctions.randomize(nEC);
-        ECPoint QAlice = G.multiply(dAlice);
+        BigInteger dDesktop = IntegerFunctions.randomize(nEC);
+        ECPoint QDesktop = G.multiply(dDesktop);
         PaillierKeyPair pkp = PaillierKeyPair.generatePaillierKeyPair();
-        BigInteger k1 = new BigInteger("2");
-        BigInteger z1 = k1.modInverse(nEC);
+        BigInteger kDesktop = new BigInteger("2");
+        BigInteger zDesktop = kDesktop.modInverse(nEC);
         BigInteger r1 = pkp.generateRandomizer();
-        BigInteger alpha = pkp.encrypt(z1, r1);
+        BigInteger alphaDesktop = pkp.encrypt(zDesktop, r1);
         BigInteger r2 = pkp.generateRandomizer();
-        BigInteger beta = pkp.encrypt(dAlice.multiply(z1).mod(nEC), r2);
-        ECPoint Q1 = ECKey.CURVE.getG().multiply(k1);
+        BigInteger beta = pkp.encrypt(dDesktop.multiply(zDesktop).mod(nEC), r2);
 
-        BigInteger k2 = new BigInteger("3");
-        ECPoint Q2 = G.multiply(k2);
+        BigInteger kPhone = new BigInteger("3");
+        ECPoint RPhone = G.multiply(kPhone);
 
-        ECPoint QCommon = Q2.multiply(k1);
+        ECPoint R = RPhone.multiply(kDesktop);
 
-        BCParameters bcParameters =  BCParameters.generateBCParameters(nEC.bitLength()*5);
+        BCParameters bcParameters =  BCParameters.generateBCParameters();
 
         MultiThreadingHelper zkProofHelper = new MultiThreadingHelper();
-        ZKProofDesktop zkProof1 = ZKProofDesktop.generateProof(z1, dAlice.multiply(z1).mod(nEC), r1, r2, QCommon, Q2, QAlice, G, alpha, beta, pkp, bcParameters, zkProofHelper);
-        zkProof1.verify(alpha, beta, G, QCommon, QAlice, Q2, pkp, bcParameters, zkProofHelper);
+        ZKProofDesktop zkProofDesktop = ZKProofDesktop.generateProof(zDesktop, dDesktop.multiply(zDesktop).mod(nEC), r1, r2, R, RPhone, QDesktop, G, alphaDesktop, beta, pkp, bcParameters, zkProofHelper);
+        zkProofDesktop.verify(alphaDesktop, beta, G, R, QDesktop, RPhone, pkp.clearPrivateKey(), bcParameters.clearPrivate(), zkProofHelper);
     }
 
     /**
@@ -70,77 +70,57 @@ public class ZKProofTest {
      * {@link de.uni_bonn.bit.wallet_protocol.ZKProofPhone}
      */
     @Test
-    public void ZKProof2Test(){
+    public void ZKProofPhoneTest(){
         ECPoint G = ECKey.CURVE.getG();
-        BigInteger dAlice = IntegerFunctions.randomize(nEC);
-        ECPoint QAlice = G.multiply(dAlice);
-        PaillierKeyPair pkp = PaillierKeyPair.generatePaillierKeyPair();
-        PaillierKeyPair pkp2 = PaillierKeyPair.generatePaillierKeyPair();
-        BigInteger k1 = new BigInteger("2");
-        BigInteger z1 = k1.modInverse(nEC);
-        BigInteger alpha = pkp.encrypt(z1);
-        BigInteger beta = pkp.encrypt(dAlice.multiply(z1).mod(nEC));
-        ECPoint Q1 = ECKey.CURVE.getG().multiply(k1);
+        BigInteger dDesktop = IntegerFunctions.randomize(nEC);
+        PaillierKeyPair pkpDesktop = PaillierKeyPair.generatePaillierKeyPair();
+        PaillierKeyPair pkpPhone = PaillierKeyPair.generatePaillierKeyPair();
+        BigInteger kDesktop = new BigInteger("2");
+        BigInteger zDesktop = kDesktop.modInverse(nEC);
+        BigInteger alphaDesktop = pkpDesktop.encrypt(zDesktop);
+        BigInteger beta = pkpDesktop.encrypt(dDesktop.multiply(zDesktop).mod(nEC));
 
-        BigInteger dBob = IntegerFunctions.randomize(nEC);
-        ECPoint QBob = G.multiply(dBob);
-        BigInteger k2 = new BigInteger("3");
-        BigInteger z2 = k2.modInverse(nEC);
+        BigInteger dPhone = IntegerFunctions.randomize(nEC);
+        ECPoint QPhone = G.multiply(dPhone);
+        BigInteger kPhone = new BigInteger("3");
+        BigInteger zPhone = kPhone.modInverse(nEC);
         BigInteger c = IntegerFunctions.randomize(nEC.pow(5));
-        ECPoint Q2 = G.multiply(k2);
+        ECPoint RPhone = G.multiply(kPhone);
 
-        BigInteger r4 = pkp2.generateRandomizer();
-        BigInteger alphaPrime = pkp2.encrypt(z2, r4);
+        BigInteger r4 = pkpPhone.generateRandomizer();
+        BigInteger alphaPhone = pkpPhone.encrypt(zPhone, r4);
 
-        ECPoint QCommon = Q2.multiply(k1);
-        BigInteger rPrime = QCommon.normalize().getAffineXCoord().toBigInteger().mod(nEC);
+        ECPoint R = RPhone.multiply(kDesktop);
+        BigInteger r = R.normalize().getAffineXCoord().toBigInteger().mod(nEC);
         BigInteger hm = new BigInteger("5");
-        BigInteger r3 = pkp.generateRandomizer();
-        BigInteger sigma = pkp.add(
-                pkp.add(
-                        pkp.multiplyWithScalar(alpha, z2.multiply(hm)),
-                        pkp.multiplyWithScalar(beta, z2.multiply(dBob).multiply(rPrime))
+        BigInteger r3 = pkpDesktop.generateRandomizer();
+        BigInteger sigma = pkpDesktop.add(
+                pkpDesktop.add(
+                        pkpDesktop.multiplyWithScalar(alphaDesktop, zPhone.multiply(hm)),
+                        pkpDesktop.multiplyWithScalar(beta, zPhone.multiply(dPhone).multiply(r))
                 ),
-                pkp.encrypt(nEC.multiply(c), r3));
+                pkpDesktop.encrypt(nEC.multiply(c), r3));
 
-        BCParameters bcParameters =  BCParameters.generateBCParameters(nEC.bitLength()*5);
+        BCParameters bcParameters =  BCParameters.generateBCParameters();
 
+        PaillierKeyPair publicPkpDesktop = pkpDesktop.clearPrivateKey();
         MultiThreadingHelper zkProofHelper = new MultiThreadingHelper();
-        ZKProofPhone zkProof2 = ZKProofPhone.generateProof(z2, dBob.multiply(z2), c, r3, r4, QCommon, Q2, QBob, G,
-                pkp.multiplyWithScalar(alpha, hm), pkp.multiplyWithScalar(beta, rPrime), sigma, alphaPrime,
-                pkp, pkp2, bcParameters, zkProofHelper);
+        ZKProofPhone zkProof2 = ZKProofPhone.generateProof(zPhone, dPhone.multiply(zPhone), c, r3, r4, RPhone, QPhone, G,
+                publicPkpDesktop.multiplyWithScalar(alphaDesktop, hm), publicPkpDesktop.multiplyWithScalar(beta, r), sigma, alphaPhone,
+                publicPkpDesktop, pkpPhone, bcParameters, zkProofHelper);
 
-        zkProof2.verify(pkp.multiplyWithScalar(alpha, hm), pkp.multiplyWithScalar(beta, rPrime), sigma, alphaPrime,
-                G, QCommon, QBob, Q2, pkp, pkp2, bcParameters, zkProofHelper);
+        zkProof2.verify(pkpDesktop.multiplyWithScalar(alphaDesktop, hm), pkpDesktop.multiplyWithScalar(beta, r), sigma, alphaPhone,
+                G, QPhone, RPhone, pkpDesktop, pkpPhone.clearPrivateKey(), bcParameters.clearPrivate(), zkProofHelper);
     }
 
-    @Ignore
     @Test
-    public void benchmarkSafePrimeGen(){
-        final BigInteger ONE = BigInteger.ONE;
-        final BigInteger TWO = new BigInteger("2");
-        SecureRandom sr = new SecureRandom();
-        long iterations = 10;
-        long cumulatedRuntime = 0;
-        for(int i = 0; i < iterations; i ++){
-            long starTime = System.currentTimeMillis();
-            BigInteger safePrime = BCParameters.generateSafePrime2(512, sr);
-            long endTime = System.currentTimeMillis();
-            Assert.assertTrue(safePrime.isProbablePrime(100) && safePrime.subtract(ONE).divide(TWO).isProbablePrime(100));
-            System.out.println("Safe prime gen took: " + (endTime - starTime) + "ms");
-            cumulatedRuntime += endTime - starTime;
-        }
-        System.out.println("Average runtime new: " + (cumulatedRuntime / iterations) + "ms");
+    public void ZKProofInitTest(){
+        long time = System.currentTimeMillis();
+        BCParameters params = BCParameters.generateBCParameters2();
+        System.out.println("time for gen: " + (System.currentTimeMillis() - time));
+        ZKProofInit proof = ZKProofInit.generate(params, "init proof test");
 
-//        cumulatedRuntime = 0;
-//        for(int i = 0; i < iterations; i ++){
-//            long starTime = System.currentTimeMillis();
-//            BigInteger safePrime = BCParameters.generateSafePrimeSimple(512, sr);
-//            long endTime = System.currentTimeMillis();
-//            Assert.assertTrue(safePrime.isProbablePrime(100) && safePrime.subtract(ONE).divide(TWO).isProbablePrime(100));
-//            System.out.println("Safe prime gen took: " + (endTime - starTime) + "ms");
-//            cumulatedRuntime += endTime - starTime;
-//        }
-//        System.out.println("Average runtime simple: " + (cumulatedRuntime / iterations) + "ms");
+        BCParameters publicParams = params.clearPrivate();
+        proof.verify(publicParams, "init proof test");
     }
 }

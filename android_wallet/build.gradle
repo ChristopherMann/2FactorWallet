@@ -3,7 +3,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.12.1'
+        classpath 'com.android.tools.build:gradle:0.14.2'
     }
 }
 apply plugin: 'android'
@@ -33,10 +33,20 @@ android {
         abortOnError false
     }
 
+    signingConfigs {
+        release {
+            storeFile file("/home/chris/.android/debug.keystore")
+            storePassword "android"
+            keyPassword "android"
+            keyAlias "androiddebugkey"
+        }
+    }
+
     buildTypes {
         release {
             runProguard true
             proguardFiles getDefaultProguardFile('proguard-project.txt'), 'proguard-rules.txt'
+            signingConfig signingConfigs.release
         }
         debug {
             runProguard true
@@ -54,6 +64,10 @@ android {
         exclude 'META-INF/LICENSE.txt'
         exclude 'META-INF/NOTICE.txt'
         exclude 'META-INF/DEPENDENCIES'
+        //remove native scrypt libs. Not used on Android.
+        exclude 'lib/x86_64/darwin/libscrypt.dylib'
+        exclude 'lib/x86_64/freebsd/libscrypt.so'
+        exclude 'lib/x86_64/linux/libscrypt.so'
     }
 }
 
@@ -64,4 +78,8 @@ dependencies {
     compile 'org.apache.avro:avro-ipc:1.7.7'
     compile 'org.slf4j:slf4j-android:1.7.7'
     compile project(':wallet_lib')
+}
+
+configurations.all{
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
 }

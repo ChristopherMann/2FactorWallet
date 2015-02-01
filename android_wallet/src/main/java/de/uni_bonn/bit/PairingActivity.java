@@ -23,6 +23,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
+import de.uni_bonn.bit.wallet_protocol.ZKProofInit;
 import org.bitcoinj.core.Base58;
 import org.bitcoinj.core.ECKey;
 import com.google.zxing.integration.android.IntentIntegrator;
@@ -108,12 +109,14 @@ public class PairingActivity extends Activity {
                                 qrCodeData.getPublicKey(), qrCodeData.getIpAddresses());
                         IPairingProtocol clientProxy = ReflectRequestor.getClient(IPairingProtocol.class, client);
 
-                        BigInteger keyShare = IntegerFunctions.randomize(ECKey.CURVE.getN());
+                        BigInteger keyShare = IntegerFunctions.randomize(ECKey.CURVE.getN().subtract(BigInteger.ONE)).add(BigInteger.ONE);
                         ECPoint sharePublicKey = ECKey.CURVE.getG().multiply(keyShare).normalize();
                         PaillierKeyPair pkp = PaillierKeyPair.generatePaillierKeyPair();
                         BCParameters phoneBCParameters = BCParameters.generateBCParameters2();
-                        PairingMessage message = new PairingMessage(sharePublicKey, pkp, phoneBCParameters);
+                        ZKProofInit myZKProof = ZKProofInit.generate(phoneBCParameters, "Phone Init Proof");
+                        PairingMessage message = new PairingMessage(sharePublicKey, pkp.clearPrivateKey(), phoneBCParameters.clearPrivate(), myZKProof);
                         PairingMessage response = clientProxy.pair(message);
+                        response.getZkProofInit().verify(response.getBcParameters(), "Desktop Init Proof");
                         KeyShareStore keyShareStore = new KeyShareStore(BitcoinECMathHelper.convertBigIntToPrivKey(keyShare),
                                 BitcoinECMathHelper.convertPointToPubKEy(response.getOtherPublicKey()),
                                 response.getPkp(), pkp, response.getBcParameters(), phoneBCParameters);

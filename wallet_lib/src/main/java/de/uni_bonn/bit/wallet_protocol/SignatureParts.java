@@ -26,22 +26,22 @@ import java.math.BigInteger;
 public class SignatureParts {
 
     @Stringable
-    BigInteger alpha;
+    BigInteger alphaDesktop;
     @Stringable
     BigInteger beta;
 
     public SignatureParts() {}
-    public SignatureParts(BigInteger alpha, BigInteger beta) {
-        this.alpha = alpha;
+    public SignatureParts(BigInteger alphaDesktop, BigInteger beta) {
+        this.alphaDesktop = alphaDesktop;
         this.beta = beta;
     }
 
-    public BigInteger getAlpha() {
-        return alpha;
+    public BigInteger getAlphaDesktop() {
+        return alphaDesktop;
     }
 
-    public void setAlpha(BigInteger alpha) {
-        this.alpha = alpha;
+    public void setAlphaDesktop(BigInteger alphaDesktop) {
+        this.alphaDesktop = alphaDesktop;
     }
 
     public BigInteger getBeta() {

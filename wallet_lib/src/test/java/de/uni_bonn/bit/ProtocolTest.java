@@ -42,13 +42,8 @@ public class ProtocolTest extends ProtocolBaseTest {
      */
     @Test
     public void test(){
-        BigInteger nEC = ECKey.CURVE.getN();
-
-        BigInteger dDesktop = convertPrivKeyToBigInt(desktopKeyShare);
         ECPoint QDesktop = convertPubKeyToPoint(desktopKeyShare);
-        BigInteger dPhone = convertPrivKeyToBigInt(phoneKeyShare);
         ECPoint QPhone = convertPubKeyToPoint(phoneKeyShare);
-        ECPoint commonPoint = QDesktop.multiply(dPhone);
 
         byte[] message = "abcTESTMESSAGEdef".getBytes();
         Sha256Hash hash = Sha256Hash.create(message);
@@ -57,8 +52,8 @@ public class ProtocolTest extends ProtocolBaseTest {
 
         PaillierKeyPair pkpDesktop = PaillierKeyPair.generatePaillierKeyPair();
         PaillierKeyPair pkpPhone = PaillierKeyPair.generatePaillierKeyPair();
-        DesktopSigner desktopSigner = new DesktopSigner(desktopKeyShare, convertPointToPubKEy(QPhone), pkpDesktop, pkpPhone, desktopBCParameters, phoneBCParameters);
-        PhoneSigner phoneSigner = new PhoneSigner(phoneKeyShare, convertPointToPubKEy(QDesktop), pkpDesktop, pkpPhone, desktopBCParameters, phoneBCParameters);
+        DesktopSigner desktopSigner = new DesktopSigner(desktopKeyShare, convertPointToPubKEy(QPhone), pkpDesktop, pkpPhone.clearPrivateKey(), desktopBCParameters, phoneBCParameters.clearPrivate());
+        PhoneSigner phoneSigner = new PhoneSigner(phoneKeyShare, convertPointToPubKEy(QDesktop), pkpDesktop.clearPrivateKey(), pkpPhone, desktopBCParameters.clearPrivate(), phoneBCParameters);
 
         //Step 1
         SignatureParts signatureParts = desktopSigner.computeSignatureParts();

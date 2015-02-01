@@ -27,13 +27,22 @@ public class PairingMessage {
     PaillierKeyPair pkp;
     byte[] otherPublicKey;
     BCParameters bcParameters;
+    ZKProofInit zkProofInit;
 
     private PairingMessage(){ }
 
-    public PairingMessage(ECPoint otherPublicKey, PaillierKeyPair pkp, BCParameters bcParameters) {
+    public PairingMessage(ECPoint otherPublicKey, PaillierKeyPair pkp, BCParameters bcParameters,
+                          ZKProofInit zkProofInit) {
+        if(pkp.containsPrivateKey()){
+            throw new RuntimeException("Non null private key in PaillierKeyPair. This must not be the case for a pairing message!");
+        }
         this.pkp = pkp;
         this.otherPublicKey = otherPublicKey.normalize().getEncoded(true);
+        if(bcParameters.containsPrivateSecrets()){
+            throw new RuntimeException("Non null private key in PaillierKeyPair. This must not be the case for a pairing message!");
+        }
         this.bcParameters = bcParameters;
+        this.zkProofInit = zkProofInit;
     }
 
     public ECPoint getOtherPublicKey() {
@@ -46,5 +55,9 @@ public class PairingMessage {
 
     public BCParameters getBcParameters() {
         return bcParameters;
+    }
+
+    public ZKProofInit getZkProofInit() {
+        return zkProofInit;
     }
 }

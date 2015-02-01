@@ -37,12 +37,12 @@ public class PhoneSigner {
     BCParameters phoneBCParameters;
     BigInteger privateKey;
     ECPoint otherPublicKey;
-    MultiThreadingHelper zkProofHelper;
+    MultiThreadingHelper multiThreadingHelper;
 
-    private BigInteger alpha;
+    private BigInteger alphaDesktop;
     private BigInteger beta;
-    private BigInteger k2;
-    private ECPoint Q2;
+    private BigInteger kPhone;
+    private ECPoint RPhone;
 
     public PhoneSigner(ECKey privateKey, ECKey otherPublicKey, PaillierKeyPair pkpDesktop, PaillierKeyPair pkpPhone,
                        BCParameters desktopBCParameters, BCParameters phoneBCParameters) {
@@ -52,51 +52,44 @@ public class PhoneSigner {
         this.phoneBCParameters = phoneBCParameters;
         this.privateKey = BitcoinECMathHelper.convertPrivKeyToBigInt(privateKey);
         this.otherPublicKey = BitcoinECMathHelper.convertPubKeyToPoint(otherPublicKey);
-        this.zkProofHelper = new MultiThreadingHelper();
+        this.multiThreadingHelper = new MultiThreadingHelper();
     }
 
     public EphemeralValueShare generateEphemeralValueShare(SignatureParts signatureParts){
-        alpha = signatureParts.getAlpha();
+        alphaDesktop = signatureParts.getAlphaDesktop();
         beta = signatureParts.getBeta();
-        k2 = IntegerFunctions.randomize(nEC);
-        Q2 = ECKey.CURVE.getG().multiply(k2).normalize();
-        return new EphemeralValueShare(Q2);
+        kPhone = IntegerFunctions.randomize(nEC);
+        RPhone = ECKey.CURVE.getG().multiply(kPhone).normalize();
+        return new EphemeralValueShare(RPhone);
     }
 
     public EncryptedSignatureWithProof computeEncryptedSignature(EphemeralPublicValueWithProof message, byte[] hash){
-        ECPoint Q = message.getQ();
-        // We first check that Q is associated with the correct curve and then we check that it is on the associated curve.
-        if(! (Q.getCurve().equals(ECKey.CURVE.getCurve()) && Q.isValid())){
-            throw new ProtocolException("The point Q provided by the desktop is invalid");
+        ECPoint R = message.getR();
+        // We first check that R is associated with the correct curve and then we check that it is on the associated curve.
+        if(! (R.getCurve().equals(ECKey.CURVE.getCurve()) && R.isValid())){
+            throw new ProtocolException("The point R provided by the desktop is invalid");
         }
-        ECPoint QBob = ECKey.CURVE.getG().multiply(privateKey).normalize();
-        BigInteger z2 = k2.modInverse(nEC);
-        BigInteger r = Q.normalize().getAffineXCoord().toBigInteger().mod(nEC);
+        ECPoint QPhone = ECKey.CURVE.getG().multiply(privateKey).normalize();
+        BigInteger zPhone = kPhone.modInverse(nEC);
+        BigInteger r = R.normalize().getAffineXCoord().toBigInteger().mod(nEC);
         BigInteger hm = new BigInteger(1, hash);
         BigInteger randomizer = IntegerFunctions.randomize(nEC.pow(5));
         BigInteger r3 = pkpDesktop.generateRandomizer();
-//        BigInteger sigma = pkpDesktop.add(
-//                pkpDesktop.add(
-//                        pkpDesktop.multiplyWithScalar(alpha, z2.multiply(hm)),
-//                        pkpDesktop.multiplyWithScalar(beta, z2.multiply(privateKey).mod(nEC).multiply(r))
-//                ),
-//                pkpDesktop.encrypt(nEC.multiply(randomizer), r3));
         BigInteger nsquaredDesktop = pkpDesktop.getN().pow(2);
-        ForkJoinTask<BigInteger> sigma = zkProofHelper.PowMult(alpha, z2.multiply(hm), beta, z2.multiply(privateKey).mod(nEC).multiply(r),
+        ForkJoinTask<BigInteger> sigma = multiThreadingHelper.PowMult(alphaDesktop, zPhone.multiply(hm), beta, zPhone.multiply(privateKey).mod(nEC).multiply(r),
                 pkpDesktop.getG(), nEC.multiply(randomizer), r3, pkpDesktop.getN(), nsquaredDesktop);
 
         BigInteger r4 = pkpPhone.generateRandomizer();
         BigInteger nsquaredPhone = pkpPhone.getN().pow(2);
-//        BigInteger alphaPrime = pkpPhone.encrypt(z2, r4);
-        ForkJoinTask<BigInteger> alphaPrime = zkProofHelper.PowMult(pkpPhone.getG(), z2, r4, pkpPhone.getN(), nsquaredPhone);
-        ForkJoinTask<BigInteger> c1 = zkProofHelper.PowMult(alpha, hm, nsquaredDesktop);
-        ForkJoinTask<BigInteger> c2 = zkProofHelper.PowMult(beta, r, nsquaredDesktop);
+        ForkJoinTask<BigInteger> alphaPhone = multiThreadingHelper.PowMult(pkpPhone.getG(), zPhone, r4, pkpPhone.getN(), nsquaredPhone);
+        ForkJoinTask<BigInteger> c1 = multiThreadingHelper.PowMult(alphaDesktop, hm, nsquaredDesktop);
+        ForkJoinTask<BigInteger> c2 = multiThreadingHelper.PowMult(beta, r, nsquaredDesktop);
 
-        message.getProof().verify(alpha, beta, ECKey.CURVE.getG(), message.getQ(), otherPublicKey, Q2, pkpDesktop,
-                desktopBCParameters, zkProofHelper);
-        ZKProofPhone proof = ZKProofPhone.generateProof(z2, privateKey.multiply(z2).mod(nEC), randomizer, r3, r4, message.getQ(), Q2,
-                QBob, ECKey.CURVE.getG(), c1.join(), c2.join(),
-                sigma.join(), alphaPrime.join(), pkpDesktop, pkpPhone, phoneBCParameters, zkProofHelper);
-        return new EncryptedSignatureWithProof(sigma.join(), alphaPrime.join(), proof);
+        message.getProof().verify(alphaDesktop, beta, ECKey.CURVE.getG(), message.getR(), otherPublicKey, RPhone, pkpDesktop,
+                desktopBCParameters, multiThreadingHelper);
+        ZKProofPhone proof = ZKProofPhone.generateProof(zPhone, privateKey.multiply(zPhone).mod(nEC), randomizer, r3, r4, RPhone,
+                QPhone, ECKey.CURVE.getG(), c1.join(), c2.join(),
+                sigma.join(), alphaPhone.join(), pkpDesktop, pkpPhone, phoneBCParameters, multiThreadingHelper);
+        return new EncryptedSignatureWithProof(sigma.join(), alphaPhone.join(), proof);
     }
 }

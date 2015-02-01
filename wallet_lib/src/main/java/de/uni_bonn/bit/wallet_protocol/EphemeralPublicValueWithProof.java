@@ -23,18 +23,18 @@ import org.spongycastle.math.ec.ECPoint;
  * public ephemeral value and a zero-knowledge proof.
  */
 public class EphemeralPublicValueWithProof {
-    private byte[] Q;
+    private byte[] R;
     private ZKProofDesktop proof;
 
     private EphemeralPublicValueWithProof(){ }
 
-    public EphemeralPublicValueWithProof(ECPoint Q, ZKProofDesktop proof) {
-        this.Q = Q.getEncoded(true);
+    public EphemeralPublicValueWithProof(ECPoint R, ZKProofDesktop proof) {
+        this.R = R.getEncoded(true);
         this.proof = proof;
     }
 
-    public ECPoint getQ() {
-        return ECKey.CURVE.getCurve().decodePoint(this.Q);
+    public ECPoint getR() {
+        return ECKey.CURVE.getCurve().decodePoint(this.R);
     }
 
     public ZKProofDesktop getProof() {

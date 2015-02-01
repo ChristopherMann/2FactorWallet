@@ -15,6 +15,7 @@
 */
 package de.uni_bonn.bit;
 
+import de.uni_bonn.bit.wallet_protocol.ZKProofInit;
 import org.bitcoinj.core.ECKey;
 import de.uni_bonn.bit.wallet_protocol.IPairingProtocol;
 import de.uni_bonn.bit.wallet_protocol.PairingMessage;
@@ -38,16 +39,19 @@ public class PairingProtocolImpl implements IPairingProtocol{
 
     public PairingProtocolImpl(PairingProtocolListener listener, KeyShareWalletExtension walletExtension) {
         this.listener = listener;
-        this.keyShare = IntegerFunctions.randomize(nEC);
+        this.keyShare = IntegerFunctions.randomize(nEC.subtract(BigInteger.ONE)).add(BigInteger.ONE);
         this.walletExtension = walletExtension;
     }
 
     @Override
     public PairingMessage pair(PairingMessage message) {
+        message.getZkProofInit().verify(message.getBcParameters(), "Phone Init Proof");
         ECPoint publicKey = ECKey.CURVE.getG().multiply(keyShare).normalize();
         PaillierKeyPair pkp = PaillierKeyPair.generatePaillierKeyPair();
         BCParameters desktopBCParameters = BCParameters.generateBCParameters();
-        PairingMessage response = new PairingMessage(publicKey, pkp, desktopBCParameters);
+        ZKProofInit myZKProof = ZKProofInit.generate(desktopBCParameters, "Desktop Init Proof");
+        PairingMessage response = new PairingMessage(publicKey, pkp.clearPrivateKey(),
+                desktopBCParameters.clearPrivate(), myZKProof);
         walletExtension.setPrivateKey(BitcoinECMathHelper.convertBigIntToPrivKey(keyShare));
         walletExtension.setOtherPublicKey(BitcoinECMathHelper.convertPointToPubKEy(message.getOtherPublicKey()));
         walletExtension.setPkpDesktop(pkp);
