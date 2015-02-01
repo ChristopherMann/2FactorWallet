@@ -43,6 +43,7 @@ public class PhoneSigner {
     private BigInteger beta;
     private BigInteger kPhone;
     private ECPoint RPhone;
+    protected States state;
 
     public PhoneSigner(ECKey privateKey, ECKey otherPublicKey, PaillierKeyPair pkpDesktop, PaillierKeyPair pkpPhone,
                        BCParameters desktopBCParameters, BCParameters phoneBCParameters) {
@@ -53,17 +54,23 @@ public class PhoneSigner {
         this.privateKey = BitcoinECMathHelper.convertPrivKeyToBigInt(privateKey);
         this.otherPublicKey = BitcoinECMathHelper.convertPubKeyToPoint(otherPublicKey);
         this.multiThreadingHelper = new MultiThreadingHelper();
+        this.state = States.GenerateEphemeralValueShare;
     }
 
     public EphemeralValueShare generateEphemeralValueShare(SignatureParts signatureParts){
+        if(! state.equals(States.GenerateEphemeralValueShare))
+            throw new ProtocolException("Operation not allowed in this protocol state.");
         alphaDesktop = signatureParts.getAlphaDesktop();
         beta = signatureParts.getBeta();
         kPhone = IntegerFunctions.randomize(nEC);
         RPhone = ECKey.CURVE.getG().multiply(kPhone).normalize();
+        state = States.ComputeEncryptedSignature;
         return new EphemeralValueShare(RPhone);
     }
 
     public EncryptedSignatureWithProof computeEncryptedSignature(EphemeralPublicValueWithProof message, byte[] hash){
+        if(! state.equals(States.ComputeEncryptedSignature))
+            throw new ProtocolException("Operation not allowed in this protocol state.");
         ECPoint R = message.getR();
         // We first check that R is associated with the correct curve and then we check that it is on the associated curve.
         if(! (R.getCurve().equals(ECKey.CURVE.getCurve()) && R.isValid())){
@@ -90,6 +97,11 @@ public class PhoneSigner {
         ZKProofPhone proof = ZKProofPhone.generateProof(zPhone, privateKey.multiply(zPhone).mod(nEC), randomizer, r3, r4, RPhone,
                 QPhone, ECKey.CURVE.getG(), c1.join(), c2.join(),
                 sigma.join(), alphaPhone.join(), pkpDesktop, pkpPhone, phoneBCParameters, multiThreadingHelper);
+        state = States.Finished;
         return new EncryptedSignatureWithProof(sigma.join(), alphaPhone.join(), proof);
+    }
+
+    protected enum States{
+        GenerateEphemeralValueShare, ComputeEncryptedSignature, Finished
     }
 }
